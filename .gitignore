@@ -1,0 +1,32 @@
+# Next.js / Node
+node_modules/
+.next/
+out/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Django / Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+.env
+db.sqlite3
+media/
+staticfiles/
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
