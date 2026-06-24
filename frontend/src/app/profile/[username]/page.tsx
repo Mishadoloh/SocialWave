@@ -23,10 +23,10 @@ export default function Profile() {
       .then(res => {
         setProfile(res.data)
         setIsFollowing(res.data.is_following)
-        return api.get(`/users/${username}/posts`)
+        return api.get(`/posts?username=${username}`)
       })
       .then(res => {
-        setPosts(res.data.results)
+        setPosts(res.data.results || res.data)
         setIsLoading(false)
       })
       .catch(err => {

@@ -3,6 +3,7 @@ import './globals.css'
 import { AuthProvider } from '@/lib/AuthContext'
 import { ToastProvider } from '@/lib/ToastContext'
 import Sidebar from '@/components/Sidebar'
+import MainLayout from '@/components/MainLayout'
 
 export const metadata: Metadata = {
   title: 'SocialWave — Соціальна мережа',
@@ -17,9 +18,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AuthProvider>
             <div className="app-layout">
               <Sidebar />
-              <main className="main-content">
+              <MainLayout>
                 {children}
-              </main>
+              </MainLayout>
             </div>
           </AuthProvider>
         </ToastProvider>

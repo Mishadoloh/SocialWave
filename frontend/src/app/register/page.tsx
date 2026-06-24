@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import { useAuth } from '@/lib/AuthContext'
 import { useToast } from '@/lib/ToastContext'
 import Link from 'next/link'
 import { UserPlus } from 'lucide-react'
@@ -14,12 +15,19 @@ export default function Register() {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (user) {
+      router.push('/')
+    }
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
-      await api.post('/users/register/', { username, email, password })
+      await api.post('/users/register', { username, email, password })
       toast('Акаунт успішно створено! Тепер ви можете увійти.', 'success')
       router.push('/login')
     } catch (e: any) {

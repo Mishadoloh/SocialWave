@@ -23,9 +23,10 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         username = self.request.query_params.get('username')
+        queryset = Post.objects.all().select_related('author').prefetch_related('likes', 'comments__author')
         if username:
-            return Post.objects.filter(author__username=username)
-        return Post.objects.all()
+            return queryset.filter(author__username=username)
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -33,7 +34,7 @@ class PostListCreateView(generics.ListCreateAPIView):
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostSerializer
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().select_related('author').prefetch_related('likes', 'comments__author')
 
     def get_permissions(self):
         if self.request.method in ['PUT', 'PATCH', 'DELETE']:
@@ -69,7 +70,7 @@ class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
 
     def get_queryset(self):
-        return Comment.objects.filter(post_id=self.kwargs['pk'])
+        return Comment.objects.filter(post_id=self.kwargs['pk']).select_related('author')
 
     def perform_create(self, serializer):
         post = Post.objects.get(pk=self.kwargs['pk'])
@@ -85,9 +86,14 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
 @api_view(['GET'])
 def search_posts(request):
+    from rest_framework.pagination import PageNumberPagination
     q = request.query_params.get('q', '')
     if not q:
         return Response([])
-    posts = Post.objects.filter(content__icontains=q)[:20]
-    serializer = PostSerializer(posts, many=True, context={'request': request})
-    return Response(serializer.data)
+    posts = Post.objects.filter(content__icontains=q).select_related('author').prefetch_related('likes', 'comments__author')
+    
+    paginator = PageNumberPagination()
+    paginator.page_size = 20
+    result_page = paginator.paginate_queryset(posts, request)
+    serializer = PostSerializer(result_page, many=True, context={'request': request})
+    return paginator.get_paginated_response(serializer.data)

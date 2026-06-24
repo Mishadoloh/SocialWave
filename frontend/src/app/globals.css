@@ -250,18 +250,41 @@ html, body {
 /* Cards & Glassmorphism */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 24px;
   transition: all var(--transition);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 
 .card:hover {
-  border-color: var(--border-hover);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  border-color: rgba(108, 99, 255, 0.3);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3), inset 0 0 20px rgba(108,99,255,0.05);
+}
+
+/* Spotlight Effect */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-layer {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.spotlight-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
 }
 
 /* Skeleton Loaders */
@@ -569,9 +592,13 @@ html, body {
   width: 320px;
   flex-shrink: 0;
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-main {
@@ -579,9 +606,12 @@ html, body {
   display: flex;
   flex-direction: column;
   background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  position: relative;
 }
 
 .message-bubble {
@@ -590,8 +620,9 @@ html, body {
   border-radius: 20px;
   font-size: 15px;
   line-height: 1.5;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   word-break: break-word;
+  position: relative;
 }
 
 .message-bubble.mine {
@@ -602,8 +633,10 @@ html, body {
 }
 
 .message-bubble.theirs {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   align-self: flex-start;
   border-bottom-left-radius: 4px;
@@ -693,4 +726,40 @@ html, body {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-muted);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-input);
+  padding: 6px;
+  border-radius: 30px;
+  width: fit-content;
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 10px 24px;
+  border-radius: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tab.active {
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
 }
