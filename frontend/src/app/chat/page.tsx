@@ -15,6 +15,7 @@ export default function Chat() {
   const { toast } = useToast()
   
   const [rooms, setRooms] = useState([])
+  const [suggestedUsers, setSuggestedUsers] = useState([])
   const [activeRoom, setActiveRoom] = useState<any>(null)
   const [messages, setMessages] = useState([])
   const [message, setMessage] = useState('')
@@ -29,7 +30,7 @@ export default function Chat() {
     if (!loading && !user) router.push('/login')
   }, [user, loading, router])
 
-  // Fetch Rooms
+  // Fetch Rooms & Suggestions
   useEffect(() => {
     if (user) {
       api.get('/chat/rooms')
@@ -41,6 +42,8 @@ export default function Chat() {
           toast('Помилка завантаження кімнат', 'error')
           setIsRoomsLoading(false)
         })
+        
+      api.get('/users/suggested').then(res => setSuggestedUsers(res.data)).catch(console.error)
     }
   }, [user, toast])
 
@@ -61,7 +64,7 @@ export default function Chat() {
       })
 
     const token = localStorage.getItem('access_token')
-    const socket = new WebSocket(`ws://localhost:8000/ws/chat/${activeRoom.name}/?token=${token}`)
+    const socket = new WebSocket(`ws://localhost:8000/ws/chat/${activeRoom.id}/?token=${token}`)
 
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data)
@@ -80,15 +83,13 @@ export default function Chat() {
     }, 100)
   }
 
-  const handleCreateChat = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!searchUsername.trim()) return
+  const openChat = async (targetUsername: string) => {
+    if (!targetUsername.trim()) return
     setIsCreatingChat(true)
     try {
-      const res = await api.post('/chat/rooms/open', { username: searchUsername })
+      const res = await api.post('/chat/rooms/open', { username: targetUsername })
       const newRoom = res.data
       
-      // Check if room already exists in state
       if (!rooms.find((r: any) => r.id === newRoom.id)) {
         setRooms((prev: any) => [newRoom, ...prev] as any)
       }
@@ -101,6 +102,11 @@ export default function Chat() {
     } finally {
       setIsCreatingChat(false)
     }
+  }
+
+  const handleCreateChat = (e: React.FormEvent) => {
+    e.preventDefault()
+    openChat(searchUsername)
   }
 
   const sendMessage = (e: React.FormEvent) => {
@@ -149,10 +155,42 @@ export default function Chat() {
                 {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: '56px', borderRadius: '12px' }}></div>)}
               </div>
             ) : rooms.length === 0 ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="empty-state" style={{ padding: '40px 20px' }}>
-                <div className="empty-state-icon"><Users size={32} /></div>
-                <h4 style={{ fontSize: '15px' }}>Немає чатів</h4>
-              </motion.div>
+              <div style={{ padding: '20px' }}>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="empty-state" style={{ padding: '40px 20px', marginBottom: '24px' }}>
+                  <div className="empty-state-icon"><Users size={32} /></div>
+                  <h4 style={{ fontSize: '15px' }}>Немає чатів</h4>
+                </motion.div>
+                
+                {suggestedUsers.length > 0 && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Рекомендовані для вас
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {suggestedUsers.map((su: any) => (
+                        <div 
+                          key={su.username}
+                          onClick={() => openChat(su.username)}
+                          style={{ 
+                            display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', 
+                            background: 'rgba(255,255,255,0.02)', borderRadius: '12px', cursor: 'pointer',
+                            border: '1px solid var(--border)'
+                          }}
+                          className="hover-bg"
+                        >
+                          <div className="avatar avatar-sm" style={{ width: '40px', height: '40px', fontSize: '16px', background: 'var(--accent-light)', color: '#fff' }}>
+                            {su.username[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '14px' }}>{su.username}</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>AI Bot</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             ) : (
               <AnimatePresence>
                 {rooms.map((room: any) => {

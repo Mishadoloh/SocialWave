@@ -5,6 +5,8 @@ from django.db import models
 class User(AbstractUser):
     bio = models.TextField(blank=True, default='')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    is_bot = models.BooleanField(default=False)
+    bot_type = models.CharField(max_length=50, blank=True, null=True)
     followers = models.ManyToManyField(
         'self',
         symmetrical=False,

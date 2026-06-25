@@ -1,9 +1,11 @@
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.db.models import Q
-from .models import Post, Like, Comment
-from .serializers import PostSerializer, CommentSerializer
+from django.db.models import Q, Count
+from django.utils import timezone
+from datetime import timedelta
+from .models import Post, Like, Comment, Hashtag, Bookmark, Report
+from .serializers import PostSerializer, CommentSerializer, HashtagSerializer, ReportSerializer
 from notifications.models import Notification
 
 
@@ -23,9 +25,12 @@ class PostListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         username = self.request.query_params.get('username')
+        tag = self.request.query_params.get('tag')
         queryset = Post.objects.all().select_related('author').prefetch_related('likes', 'comments__author')
         if username:
-            return queryset.filter(author__username=username)
+            queryset = queryset.filter(author__username=username)
+        if tag:
+            queryset = queryset.filter(hashtags__name=tag)
         return queryset
 
     def perform_create(self, serializer):
@@ -97,3 +102,55 @@ def search_posts(request):
     result_page = paginator.paginate_queryset(posts, request)
     serializer = PostSerializer(result_page, many=True, context={'request': request})
     return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(['GET'])
+def trending_hashtags(request):
+    time_threshold = timezone.now() - timedelta(hours=48)
+    hashtags = Hashtag.objects.filter(
+        posts__created_at__gte=time_threshold
+    ).annotate(
+        posts_count=Count('posts')
+    ).order_by('-posts_count')[:10]
+    serializer = HashtagSerializer(hashtags, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+def bookmark_toggle(request, pk):
+    try:
+        post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response({'error': 'Пост не знайдено'}, status=404)
+
+    bookmark, created = Bookmark.objects.get_or_create(user=request.user, post=post)
+    if not created:
+        bookmark.delete()
+        bookmarked = False
+    else:
+        bookmarked = True
+
+    return Response({'bookmarked': bookmarked})
+
+
+class UserBookmarksView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    
+    def get_queryset(self):
+        post_ids = Bookmark.objects.filter(user=self.request.user).values_list('post_id', flat=True)
+        return Post.objects.filter(id__in=post_ids).select_related('author').prefetch_related('likes', 'comments__author')
+
+
+@api_view(['POST'])
+def report_post(request, pk):
+    try:
+        post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response({'error': 'Пост не знайдено'}, status=404)
+
+    reason = request.data.get('reason', '')
+    if not reason:
+        return Response({'error': 'Reason is required'}, status=400)
+        
+    Report.objects.create(reporter=request.user, post=post, reason=reason)
+    return Response({'status': 'Report submitted successfully'}, status=201)

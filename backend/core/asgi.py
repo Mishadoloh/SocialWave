@@ -7,12 +7,13 @@ from channels.auth import AuthMiddlewareStack
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 django.setup()
 
+from core.middleware import JWTAuthMiddleware
 from chat.routing import websocket_urlpatterns as chat_ws
 from notifications.routing import websocket_urlpatterns as notif_ws
 
 application = ProtocolTypeRouter({
     'http': get_asgi_application(),
-    'websocket': AuthMiddlewareStack(
+    'websocket': JWTAuthMiddleware(
         URLRouter(chat_ws + notif_ws)
     ),
 })

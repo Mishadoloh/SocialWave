@@ -12,6 +12,7 @@ ALLOWED_HOSTS = ['*']
 APPEND_SLASH = False
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

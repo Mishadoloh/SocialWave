@@ -124,3 +124,11 @@ def following_list(request, username):
     result_page = paginator.paginate_queryset(user.following.all(), request)
     serializer = UserSerializer(result_page, many=True, context={'request': request})
     return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(['GET'])
+def suggested_users(request):
+    # Return bots first, then maybe some random users
+    bots = list(User.objects.filter(is_bot=True)[:5])
+    serializer = UserSerializer(bots, many=True, context={'request': request})
+    return Response(serializer.data)
