@@ -128,7 +128,17 @@ def following_list(request, username):
 
 @api_view(['GET'])
 def suggested_users(request):
-    # Return bots first, then maybe some random users
-    bots = list(User.objects.filter(is_bot=True)[:5])
-    serializer = UserSerializer(bots, many=True, context={'request': request})
+    current_user = request.user
+    following_ids = current_user.following.values_list('id', flat=True)
+    
+    # Get users we don't follow, exclude ourselves
+    suggestions = User.objects.exclude(id__in=following_ids).exclude(id=current_user.id)
+    
+    # Prioritize bots and users with most followers
+    from django.db.models import Count
+    suggestions = suggestions.annotate(
+        followers_count=Count('followers')
+    ).order_by('-is_bot', '-followers_count')[:5]
+
+    serializer = UserSerializer(suggestions, many=True, context={'request': request})
     return Response(serializer.data)

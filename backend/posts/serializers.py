@@ -21,11 +21,13 @@ class PostSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     hashtags = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
+    reposted_from = serializers.SerializerMethodField()
+    reposts_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = ['id', 'author', 'content', 'image', 'image_url',
-                  'likes_count', 'comments_count', 'is_liked', 'is_bookmarked', 'hashtags', 'comments', 'created_at']
+                  'likes_count', 'comments_count', 'is_liked', 'is_bookmarked', 'hashtags', 'comments', 'reposted_from', 'reposts_count', 'created_at']
         read_only_fields = ['id', 'author', 'created_at']
 
     def get_likes_count(self, obj):
@@ -54,6 +56,19 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_hashtags(self, obj):
         return [tag.name for tag in obj.hashtags.all()]
+
+    def get_reposts_count(self, obj):
+        return obj.reposts.count()
+
+    def get_reposted_from(self, obj):
+        if obj.reposted_from:
+            return {
+                'id': obj.reposted_from.id,
+                'author': UserSerializer(obj.reposted_from.author).data,
+                'content': obj.reposted_from.content,
+                'created_at': obj.reposted_from.created_at,
+            }
+        return None
 
 
 class HashtagSerializer(serializers.ModelSerializer):

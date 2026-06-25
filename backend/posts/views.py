@@ -154,3 +154,30 @@ def report_post(request, pk):
         
     Report.objects.create(reporter=request.user, post=post, reason=reason)
     return Response({'status': 'Report submitted successfully'}, status=201)
+
+@api_view(['POST'])
+def repost_post(request, pk):
+    try:
+        original_post = Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response({'error': 'Пост не знайдено'}, status=404)
+
+    # Check if already reposted
+    if Post.objects.filter(author=request.user, reposted_from=original_post).exists():
+        return Response({'error': 'Ви вже зробили репост цього запису'}, status=400)
+
+    repost = Post.objects.create(
+        author=request.user,
+        content='',  # Reposts usually don't have their own content initially, or we could accept some text
+        reposted_from=original_post
+    )
+
+    if original_post.author != request.user:
+        Notification.objects.create(
+            recipient=original_post.author,
+            actor=request.user,
+            verb='reposted',
+            post=original_post
+        )
+
+    return Response({'status': 'Репост успішно створено', 'repost_id': repost.id}, status=201)

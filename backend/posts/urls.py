@@ -11,5 +11,6 @@ urlpatterns = [
     path('/<int:pk>/like', views.like_toggle, name='like-toggle'),
     path('/<int:pk>/bookmark', views.bookmark_toggle, name='bookmark-toggle'),
     path('/<int:pk>/report', views.report_post, name='report-post'),
+    path('/<int:pk>/repost', views.repost_post, name='repost-post'),
     path('/<int:pk>/comments', views.CommentListCreateView.as_view(), name='comments'),
 ]
