@@ -15,6 +15,8 @@ export default function Profile() {
   const { toast } = useToast()
   const [profile, setProfile] = useState<any>(null)
   const [posts, setPosts] = useState([])
+  const [savedPosts, setSavedPosts] = useState([])
+  const [activeTab, setActiveTab] = useState('posts')
   const [isLoading, setIsLoading] = useState(true)
   const [isFollowing, setIsFollowing] = useState(false)
 
@@ -27,13 +29,16 @@ export default function Profile() {
       })
       .then(res => {
         setPosts(res.data.results || res.data)
+        if (user?.username === username) {
+          api.get('/posts/bookmarks').then(r => setSavedPosts(r.data.results || r.data)).catch(() => {})
+        }
         setIsLoading(false)
       })
       .catch(err => {
         toast('Помилка завантаження профілю', 'error')
         setIsLoading(false)
       })
-  }, [username, toast])
+  }, [username, toast, user?.username])
 
   const handleFollow = async () => {
     // Optimistic Update
@@ -140,15 +145,22 @@ export default function Profile() {
         </div>
       </div>
 
-      <div style={{ marginTop: '32px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 16px 8px' }}>Пости</h2>
-        {posts.length === 0 ? (
+      {isOwnProfile && (
+        <div className="tabs">
+          <button className={`tab ${activeTab === 'posts' ? 'active' : ''}`} onClick={() => setActiveTab('posts')}>Пости</button>
+          <button className={`tab ${activeTab === 'saved' ? 'active' : ''}`} onClick={() => setActiveTab('saved')}>Збережені</button>
+        </div>
+      )}
+
+      <div style={{ marginTop: isOwnProfile ? '16px' : '32px' }}>
+        {!isOwnProfile && <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 16px 8px' }}>Пости</h2>}
+        {(activeTab === 'posts' ? posts : savedPosts).length === 0 ? (
           <div className="empty-state">
              <div className="empty-state-icon"><FileText size={48} /></div>
-             <h3>Немає постів</h3>
+             <h3>{activeTab === 'posts' ? 'Немає постів' : 'Немає збережених постів'}</h3>
           </div>
         ) : (
-          posts.map((post: any) => (
+          (activeTab === 'posts' ? posts : savedPosts).map((post: any) => (
             <PostCard key={post.id} post={post} />
           ))
         )}

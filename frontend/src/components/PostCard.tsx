@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import api from '@/lib/api'
-import { Heart, MessageCircle, Share2, MoreHorizontal, Send } from 'lucide-react'
+import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Bookmark, Flag } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -16,7 +16,33 @@ export default function PostCard({ post: initialPost }: { post: any }) {
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [isCommenting, setIsCommenting] = useState(false)
+  const [isBookmarking, setIsBookmarking] = useState(false)
   const { user } = useAuth()
+
+  const handleBookmark = async () => {
+    if (isBookmarking) return
+    setIsBookmarking(true)
+    const wasBookmarked = post.is_bookmarked
+    setPost((prev: any) => ({ ...prev, is_bookmarked: !wasBookmarked }))
+    try {
+      await api.post(`/posts/${post.id}/bookmark`)
+    } catch (e) {
+      setPost((prev: any) => ({ ...prev, is_bookmarked: wasBookmarked }))
+    } finally {
+      setIsBookmarking(false)
+    }
+  }
+
+  const handleReport = async () => {
+    const reason = prompt('Чому ви хочете поскаржитися на цей пост?')
+    if (!reason) return
+    try {
+      await api.post(`/posts/${post.id}/report`, { reason })
+      alert('Скаргу надіслано. Дякуємо!')
+    } catch (e) {
+      alert('Помилка при надсиланні скарги.')
+    }
+  }
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,8 +118,8 @@ export default function PostCard({ post: initialPost }: { post: any }) {
               <Link href={`/profile/${post.author.username}`} className="post-author-name">
                 {post.author.username}
               </Link>
-              <button className="btn-icon" style={{ color: 'var(--text-muted)', background: 'transparent', border: 'none' }}>
-                <MoreHorizontal size={20} />
+              <button onClick={handleReport} className="btn-icon" style={{ color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Поскаржитись">
+                <Flag size={18} />
               </button>
             </div>
             <div className="post-time">{timeAgo}</div>
@@ -102,6 +128,15 @@ export default function PostCard({ post: initialPost }: { post: any }) {
 
         <div className="post-content">
           {post.content}
+          {post.hashtags && post.hashtags.length > 0 && (
+            <div style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {post.hashtags.map((tag: string) => (
+                <Link key={tag} href={`/search?q=%23${tag}`} style={{ color: 'var(--primary)', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {post.image_url && (
@@ -130,9 +165,9 @@ export default function PostCard({ post: initialPost }: { post: any }) {
             </motion.div>
           </button>
           
-          <button className="action-btn" style={{ marginLeft: 'auto' }}>
+          <button onClick={handleBookmark} className={`action-btn ${post.is_bookmarked ? 'liked' : ''}`} style={{ marginLeft: 'auto', color: post.is_bookmarked ? 'var(--primary)' : 'inherit' }}>
             <motion.div whileTap={{ scale: 0.9 }}>
-              <Share2 size={20} />
+              <Bookmark size={20} fill={post.is_bookmarked ? 'currentColor' : 'none'} />
             </motion.div>
           </button>
         </div>
