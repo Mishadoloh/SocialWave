@@ -17,8 +17,8 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.avatar:
-            from core.tasks import compress_image_task
-            compress_image_task.delay(self.avatar.path, 300, 300)
+            from users.tasks import compress_avatar_task
+            compress_avatar_task.delay(self.avatar.path, 300, 300)
 
     def followers_count(self):
         return self.followers.count()

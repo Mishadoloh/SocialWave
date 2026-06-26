@@ -16,7 +16,7 @@ class Post(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
-            from core.tasks import compress_image_task
+            from posts.tasks import compress_image_task
             compress_image_task.delay(self.image.path, 1080, 1080)
 
     def likes_count(self):
