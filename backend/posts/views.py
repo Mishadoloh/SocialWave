@@ -7,10 +7,13 @@ from datetime import timedelta
 from .models import Post, Like, Comment, Hashtag, Bookmark, Report
 from .serializers import PostSerializer, CommentSerializer, HashtagSerializer, ReportSerializer
 from notifications.models import Notification
+from core.permissions import IsAuthorOrReadOnly
+from core.pagination import FeedCursorPagination
 
 
 class FeedView(generics.ListAPIView):
     serializer_class = PostSerializer
+    pagination_class = FeedCursorPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -40,11 +43,7 @@ class PostListCreateView(generics.ListCreateAPIView):
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostSerializer
     queryset = Post.objects.all().select_related('author').prefetch_related('likes', 'comments__author')
-
-    def get_permissions(self):
-        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
-            return [permissions.IsAuthenticated()]
-        return [permissions.IsAuthenticatedOrReadOnly()]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
 
 @api_view(['POST'])

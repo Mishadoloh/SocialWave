@@ -7,11 +7,21 @@ class Post(models.Model):
     content = models.TextField(blank=True)
     image = models.ImageField(upload_to='posts/', blank=True, null=True)
     reposted_from = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reposts')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            from PIL import Image
+            img = Image.open(self.image.path)
+            if img.height > 1080 or img.width > 1080:
+                output_size = (1080, 1080)
+                img.thumbnail(output_size)
+                img.save(self.image.path, quality=85)
 
     def likes_count(self):
         return self.likes.count()
@@ -23,7 +33,7 @@ class Post(models.Model):
 class Like(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='likes')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         unique_together = ('user', 'post')
@@ -33,7 +43,7 @@ class Comment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comments')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ['created_at']
@@ -43,7 +53,7 @@ class Comment(models.Model):
 
 
 class Hashtag(models.Model):
-    name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=50, unique=True, db_index=True)
     posts = models.ManyToManyField(Post, related_name='hashtags')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -54,7 +64,7 @@ class Hashtag(models.Model):
 class Bookmark(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookmarks')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='bookmarks')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         unique_together = ('user', 'post')
@@ -69,7 +79,7 @@ class Report(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reports')
     reason = models.TextField()
     is_resolved = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ['-created_at']
