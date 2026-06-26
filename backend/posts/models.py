@@ -16,12 +16,8 @@ class Post(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
-            from PIL import Image
-            img = Image.open(self.image.path)
-            if img.height > 1080 or img.width > 1080:
-                output_size = (1080, 1080)
-                img.thumbnail(output_size)
-                img.save(self.image.path, quality=85)
+            from core.tasks import compress_image_task
+            compress_image_task.delay(self.image.path, 1080, 1080)
 
     def likes_count(self):
         return self.likes.count()

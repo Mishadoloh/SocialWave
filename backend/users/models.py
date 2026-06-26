@@ -17,12 +17,8 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.avatar:
-            from PIL import Image
-            img = Image.open(self.avatar.path)
-            if img.height > 300 or img.width > 300:
-                output_size = (300, 300)
-                img.thumbnail(output_size)
-                img.save(self.avatar.path, quality=85)
+            from core.tasks import compress_image_task
+            compress_image_task.delay(self.avatar.path, 300, 300)
 
     def followers_count(self):
         return self.followers.count()
