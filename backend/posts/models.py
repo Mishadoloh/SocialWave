@@ -6,6 +6,7 @@ class Post(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(blank=True)
     image = models.ImageField(upload_to='posts/', blank=True, null=True)
+    video = models.FileField(upload_to='posts/videos/', blank=True, null=True)
     reposted_from = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='reposts')
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -16,8 +17,18 @@ class Post(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
-            from posts.tasks import compress_image_task
-            compress_image_task.delay(self.image.path, 1080, 1080)
+            try:
+                from posts.tasks import compress_image_task
+                compress_image_task.delay(self.image.path, 1080, 1080)
+            except Exception:
+                # Celery/Redis unavailable — compress image inline instead
+                try:
+                    from PIL import Image as PILImage
+                    img = PILImage.open(self.image.path)
+                    img.thumbnail((1080, 1080), PILImage.LANCZOS)
+                    img.save(self.image.path, optimize=True, quality=85)
+                except Exception:
+                    pass  # If even PIL fails, keep the original file
 
     def likes_count(self):
         return self.likes.count()

@@ -18,8 +18,9 @@ export default function Feed() {
   const [posts, setPosts] = useState([])
   const [isLoadingPosts, setIsLoadingPosts] = useState(true)
   const [content, setContent] = useState('')
-  const [image, setImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null)
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -43,18 +44,21 @@ export default function Feed() {
     }
   }, [user, toast])
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setImage(file)
+      setMediaFile(file)
+      const type = file.type.startsWith('video/') ? 'video' : 'image'
+      setMediaType(type)
       const url = URL.createObjectURL(file)
-      setImagePreview(url)
+      setMediaPreview(url)
     }
   }
 
-  const handleRemoveImage = () => {
-    setImage(null)
-    setImagePreview(null)
+  const handleRemoveMedia = () => {
+    setMediaFile(null)
+    setMediaPreview(null)
+    setMediaType(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -62,24 +66,27 @@ export default function Feed() {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!content.trim() && !image) return
+    if (!content.trim() && !mediaFile) return
     setIsSubmitting(true)
     try {
       let res
-      if (image) {
+      if (mediaFile) {
         const formData = new FormData()
         formData.append('content', content)
-        formData.append('image', image)
-        res = await api.post('/posts', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        if (mediaType === 'video') {
+          formData.append('video', mediaFile)
+        } else {
+          formData.append('image', mediaFile)
+        }
+        res = await api.post('/posts', formData)
       } else {
         res = await api.post('/posts', { content })
       }
       setPosts([res.data, ...posts] as any)
       setContent('')
-      setImage(null)
-      setImagePreview(null)
+      setMediaFile(null)
+      setMediaPreview(null)
+      setMediaType(null)
       toast('Пост успішно опубліковано!', 'success')
     } catch (e) {
       toast('Не вдалося створити пост', 'error')
@@ -111,26 +118,30 @@ export default function Feed() {
                 disabled={isSubmitting}
                 style={{ width: '100%', resize: 'none', outline: 'none', color: 'var(--text-primary)' }}
               />
-              <input
+               <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   ref={fileInputRef}
-                  onChange={handleImageChange}
+                  onChange={handleMediaChange}
                   style={{ display: 'none' }}
                 />
               
               <AnimatePresence>
-                {imagePreview && (
+                {mediaPreview && (
                   <motion.div 
                     initial={{ opacity: 0, height: 0, marginTop: 0 }}
                     animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
                     exit={{ opacity: 0, height: 0, marginTop: 0 }}
                     style={{ position: 'relative', overflow: 'hidden', borderRadius: 'var(--radius-sm)' }}
                   >
-                    <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
+                    {mediaType === 'video' ? (
+                      <video src={mediaPreview} controls style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', background: '#000' }} />
+                    ) : (
+                      <img src={mediaPreview} alt="Preview" style={{ width: '100%', maxHeight: '300px', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
+                    )}
                     <button
                       type="button"
-                      onClick={handleRemoveImage}
+                      onClick={handleRemoveMedia}
                       style={{
                         position: 'absolute',
                         top: '8px',
@@ -162,7 +173,7 @@ export default function Feed() {
                 <button 
                   type="submit" 
                   className="btn btn-primary btn-sm" 
-                  disabled={(!content.trim() && !image) || isSubmitting}
+                  disabled={(!content.trim() && !mediaFile) || isSubmitting}
                   style={{ borderRadius: '20px', padding: '8px 20px' }}
                 >
                   {isSubmitting ? 'Публікація...' : <><Send size={16} /> Опублікувати</>}

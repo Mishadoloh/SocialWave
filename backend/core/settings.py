@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -74,15 +75,25 @@ DATABASES = {
 # Redis settings (use REDIS_URL from env or fallback to localhost)
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 
-# Django Channels - Redis layer
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [REDIS_URL],
+# Django Channels - use InMemoryChannelLayer when Redis not available
+try:
+    import redis as _redis_test
+    _r = _redis_test.StrictRedis.from_url(REDIS_URL, socket_connect_timeout=1)
+    _r.ping()
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [REDIS_URL],
+            },
         },
-    },
-}
+    }
+except Exception:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
 
 # Celery settings
 CELERY_BROKER_URL = REDIS_URL
@@ -152,13 +163,23 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-# Caching with Redis
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_URL,
+# Caching - Redis if available, otherwise local memory
+try:
+    import redis as _redis_cache
+    _rc = _redis_cache.StrictRedis.from_url(REDIS_URL, socket_connect_timeout=1)
+    _rc.ping()
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        }
     }
-}
+except Exception:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
 
 # Logging Configuration
 import os

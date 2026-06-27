@@ -46,7 +46,8 @@ export default function ChatRoomPage() {
   useEffect(() => {
     if (!user || !roomId) return
     const token = localStorage.getItem('access_token')
-    const socket = new WebSocket(`ws://localhost:8000/ws/chat/${roomId}/?token=${token}`)
+    const wsHost = window.location.hostname
+    const socket = new WebSocket(`ws://${wsHost}:8000/ws/chat/${roomId}/?token=${token}`)
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data)
       setMessages(prev => [...prev, data])

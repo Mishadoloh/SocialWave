@@ -29,4 +29,9 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+const withPWA = require('@ducanh2912/next-pwa').default({
+  dest: 'public',
+  disable: false,
+});
+
+module.exports = withPWA(nextConfig);

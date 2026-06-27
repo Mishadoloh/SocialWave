@@ -84,11 +84,21 @@ def follow_toggle(request, username):
 
 @api_view(['GET'])
 def search_users(request):
+    from django.db.models.functions import Lower
     q = request.query_params.get('q', '')
     if not q:
         return Response([])
-    users = User.objects.filter(
-        Q(username__icontains=q) | Q(bio__icontains=q)
+    q_lower = q.lower()
+    users = User.objects.annotate(
+        lower_username=Lower('username'),
+        lower_first_name=Lower('first_name'),
+        lower_last_name=Lower('last_name'),
+        lower_bio=Lower('bio')
+    ).filter(
+        Q(lower_username__contains=q_lower) |
+        Q(lower_first_name__contains=q_lower) |
+        Q(lower_last_name__contains=q_lower) |
+        Q(lower_bio__contains=q_lower)
     ).exclude(id=request.user.id)
     
     paginator = PageNumberPagination()

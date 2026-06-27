@@ -19,6 +19,7 @@ class PostSerializer(serializers.ModelSerializer):
     is_liked = serializers.SerializerMethodField()
     is_bookmarked = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
+    video_url = serializers.SerializerMethodField()
     hashtags = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
     reposted_from = serializers.SerializerMethodField()
@@ -26,7 +27,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'author', 'content', 'image', 'image_url',
+        fields = ['id', 'author', 'content', 'image', 'image_url', 'video', 'video_url',
                   'likes_count', 'comments_count', 'is_liked', 'is_bookmarked', 'hashtags', 'comments', 'reposted_from', 'reposts_count', 'created_at']
         read_only_fields = ['id', 'author', 'created_at']
 
@@ -46,6 +47,12 @@ class PostSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if obj.image and request:
             return request.build_absolute_uri(obj.image.url)
+        return None
+
+    def get_video_url(self, obj):
+        request = self.context.get('request')
+        if obj.video and request:
+            return request.build_absolute_uri(obj.video.url)
         return None
 
     def get_is_bookmarked(self, obj):

@@ -8,6 +8,8 @@ import MainLayout from '@/components/MainLayout'
 export const metadata: Metadata = {
   title: 'SocialWave — Соціальна мережа',
   description: 'Спілкуйтесь, діліться та знаходьте нових друзів',
+  manifest: '/manifest.json',
+  themeColor: '#1da1f2',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

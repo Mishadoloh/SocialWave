@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/AuthContext'
 import api from '@/lib/api'
-import { Home, Search, Bell, MessageCircle, User, LogOut } from 'lucide-react'
+import { Home, Search, Bell, MessageCircle, User, LogOut, Download } from 'lucide-react'
 
 export default function Sidebar() {
   const { user, logout } = useAuth()
@@ -36,6 +36,7 @@ export default function Sidebar() {
       badge: unreadNotifs > 0 ? unreadNotifs : null
     },
     { name: 'Профіль', path: `/profile/${user.username}`, icon: <User size={22} /> },
+    { name: 'Додаток', path: '/download', icon: <Download size={22} /> },
   ]
 
   return (

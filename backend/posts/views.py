@@ -91,10 +91,15 @@ class CommentListCreateView(generics.ListCreateAPIView):
 @api_view(['GET'])
 def search_posts(request):
     from rest_framework.pagination import PageNumberPagination
+    from django.db.models.functions import Lower
     q = request.query_params.get('q', '')
     if not q:
         return Response([])
-    posts = Post.objects.filter(content__icontains=q).select_related('author').prefetch_related('likes', 'comments__author')
+    posts = Post.objects.annotate(
+        lower_content=Lower('content')
+    ).filter(
+        lower_content__contains=q.lower()
+    ).select_related('author').prefetch_related('likes', 'comments__author')
     
     paginator = PageNumberPagination()
     paginator.page_size = 20

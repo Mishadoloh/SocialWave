@@ -143,6 +143,16 @@ export default function PostCard({ post: initialPost }: { post: any }) {
           <img src={post.image_url} alt="Post" className="post-image" style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginBottom: '16px', maxHeight: '400px', objectFit: 'cover' }} />
         )}
 
+        {post.video_url && (
+          <video 
+            src={post.video_url} 
+            controls 
+            playsInline
+            className="post-video" 
+            style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginBottom: '16px', maxHeight: '450px', background: '#000' }} 
+          />
+        )}
+
         <div className="post-actions">
           <motion.button 
             onClick={handleLike} 

@@ -64,11 +64,19 @@ export default function Chat() {
       })
 
     const token = localStorage.getItem('access_token')
-    const socket = new WebSocket(`ws://localhost:8000/ws/chat/${activeRoom.id}/?token=${token}`)
+    const wsHost = window.location.hostname
+    const socket = new WebSocket(`ws://${wsHost}:8000/ws/chat/${activeRoom.id}/?token=${token}`)
 
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data)
-      setMessages(prev => [...prev, data.message] as any)
+      // WebSocket sends flat event: { type, id, content, sender_id, sender_username, ... }
+      const msg = {
+        id: data.id || Date.now(),
+        content: data.content,
+        created_at: data.created_at || new Date().toISOString(),
+        sender: { id: data.sender_id, username: data.sender_username, avatar_url: data.sender_avatar },
+      }
+      setMessages(prev => [...prev, msg] as any)
       scrollToBottom()
     }
 
@@ -111,8 +119,9 @@ export default function Chat() {
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!message.trim() || !ws) return
-    ws.send(JSON.stringify({ message }))
+    if (!message.trim() || !ws || ws.readyState !== WebSocket.OPEN) return
+    // Backend consumer expects { content: '...' } not { message: '...' }
+    ws.send(JSON.stringify({ content: message }))
     setMessage('')
   }
 
@@ -273,10 +282,13 @@ export default function Chat() {
                   ) : (
                     <AnimatePresence initial={false}>
                       {messages.map((msg: any, i) => {
-                        const isMine = msg.sender.username === user.username
+                        // Support both API format (msg.sender.username) and WS format (msg.sender_username)
+                        const senderUsername = msg.sender?.username ?? msg.sender_username
+                        const isMine = senderUsername === user.username
+                        if (!msg.content) return null
                         return (
                           <motion.div 
-                            key={i} 
+                            key={msg.id || i} 
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             className={`message-bubble ${isMine ? 'mine' : 'theirs'}`}

@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-// Call Django directly to avoid Next.js rewrite stripping trailing slashes
+// Use dynamic hostname so the app works from phone/tablet on the same network
+// e.g. localhost -> localhost:8000, 192.168.1.34 -> 192.168.1.34:8000
 const API_URL = 'http://localhost:8000/api'
 
 const api = axios.create({
@@ -9,6 +10,8 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
+    // Dynamically use current hostname — works for localhost AND 192.168.x.x
+    config.baseURL = `http://${window.location.hostname}:8000/api`
     const token = localStorage.getItem('access_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
