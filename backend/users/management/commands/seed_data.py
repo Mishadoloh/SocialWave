@@ -21,7 +21,7 @@ UKRAINIAN_NAMES = [
 SURNAMES = [
     'Шевченко', 'Бондаренко', 'Коваленко', 'Олійник', 'Кравченко', 'Лисенко',
     'Марченко', 'Поліщук', 'Савченко', 'Романенко', 'Лук\'яненко', 'Хмара',
-    'Стеценко', 'Левченко', 'Гриценко', 'Мороз', 'Мельник', 'Василенко',
+    'Стеценко', 'Лevченко', 'Гриценко', 'Мороз', 'Мельник', 'Василенко',
     'Бойко', 'Павленко', 'Тимченко', 'Лещенко', 'Клименко', 'Руденко'
 ]
 
@@ -48,7 +48,7 @@ POST_TEXTS = [
     "Їздив у гори на вихідних. Краєвиди неймовірні! ⛰️",
     "Допоміг сусіду з ремонтом. Взаємодопомога — це важливо 🤝",
     "Зранку медитував 20 хвилин. Голова стає яснішою 🧘",
-    "Переглянув новий фільм — рекомендую всім! Сильна драма 🎬",
+    "Переглянув новий фильм — рекомендую всім! Сильна драма 🎬",
     "Посіяв перші насіння на городі. Чекаю на врожай 🌱",
     "Написав вірш сьогодні — давно не творив. Приємне відчуття ✍️",
     "Займаюся фотографією вже рік. Помітний прогрес! 📸",
@@ -104,6 +104,17 @@ COMMENT_TEMPLATES = [
     "Шикарно!", "Гарного дня! ☀️", "Разом до перемоги! 🇺🇦", "Справжній шедевр!"
 ]
 
+GRADIENT_PALETTES = [
+    ((79, 70, 229), (147, 51, 234)),   # Indigo to Purple
+    ((236, 72, 153), (239, 68, 68)),   # Pink to Red
+    ((16, 185, 129), (5, 150, 105)),   # Emerald to Green
+    ((245, 158, 11), (217, 119, 6)),   # Amber to Orange
+    ((6, 182, 212), (59, 130, 246)),   # Cyan to Blue
+    ((139, 92, 246), (99, 102, 241)),  # Purple to Indigo
+    ((244, 63, 94), (225, 29, 72)),    # Rose
+    ((20, 184, 166), (13, 148, 136)),  # Teal
+]
+
 
 class Command(BaseCommand):
     help = 'Seed database with fake users, follows, likes, comments, and media files'
@@ -121,7 +132,9 @@ class Command(BaseCommand):
         # Ensure media directories exist
         posts_dir = os.path.join(settings.MEDIA_ROOT, 'posts')
         videos_dir = os.path.join(posts_dir, 'videos')
+        avatars_dir = os.path.join(settings.MEDIA_ROOT, 'avatars')
         os.makedirs(videos_dir, exist_ok=True)
+        os.makedirs(avatars_dir, exist_ok=True)
 
         # Generate sample image using PIL
         sample_img_path = os.path.join(posts_dir, 'seeded_photo.jpg')
@@ -136,11 +149,29 @@ class Command(BaseCommand):
         if not os.path.exists(sample_vid_path):
             try:
                 import urllib.request
-                # A very tiny valid 3-second MP4 video
                 urllib.request.urlretrieve('https://www.w3schools.com/html/mov_bbb.mp4', sample_vid_path)
             except Exception:
                 with open(sample_vid_path, 'wb') as f:
                     f.write(b'\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom')
+
+        # Generate 30 beautiful avatar templates
+        self.stdout.write('[AVATARS] Creating avatar gradient templates...')
+        avatar_paths = []
+        for i in range(30):
+            avatar_filename = f'avatar_{i}.jpg'
+            avatar_filepath = os.path.join(avatars_dir, avatar_filename)
+            if not os.path.exists(avatar_filepath):
+                img = Image.new('RGB', (120, 120))
+                draw = ImageDraw.Draw(img)
+                color1, color2 = random.choice(GRADIENT_PALETTES)
+                for y in range(120):
+                    r = int(color1[0] + (color2[0] - color1[0]) * y / 120)
+                    g = int(color1[1] + (color2[1] - color1[1]) * y / 120)
+                    b = int(color1[2] + (color2[2] - color1[2]) * y / 120)
+                    draw.line((0, y, 120, y), fill=(r, g, b))
+                draw.ellipse((15, 15, 105, 105), outline=(255, 255, 255), width=2)
+                img.save(avatar_filepath, quality=90)
+            avatar_paths.append(f'avatars/{avatar_filename}')
 
         self.stdout.write(f'[START] Creating {num_users} users...')
 
@@ -151,7 +182,11 @@ class Command(BaseCommand):
             username = f"{name.lower().replace(chr(39), '')}_{surname.lower().replace(chr(39), '')}_{i}"[:30]
             email = f"user{i}_{random.randint(10000, 99999)}@socialwave.ua"
 
-            if User.objects.filter(username=username).exists():
+            existing_user = User.objects.filter(username=username).first()
+            if existing_user:
+                if not existing_user.avatar:
+                    existing_user.avatar = random.choice(avatar_paths)
+                    existing_user.save()
                 continue
 
             user = User.objects.create_user(
@@ -161,22 +196,34 @@ class Command(BaseCommand):
                 first_name=name,
                 last_name=surname,
                 bio=random.choice(BIO_TEMPLATES),
+                avatar=random.choice(avatar_paths)
             )
             created_users.append(user)
 
             if (i + 1) % 100 == 0:
                 self.stdout.write(f'  [OK] {i + 1}/{num_users} users created')
 
+        # Update all existing users who don't have an avatar
+        self.stdout.write('[AVATARS] Updating existing empty avatars...')
+        empty_avatars = User.objects.filter(avatar='')
+        updated_avatars_count = 0
+        for u in empty_avatars:
+            u.avatar = random.choice(avatar_paths)
+            u.save()
+            updated_avatars_count += 1
+        self.stdout.write(f'  [OK] Assigned avatars to {updated_avatars_count} users')
+
         self.stdout.write(f'[OK] Created {len(created_users)} new users!')
 
         # Add follows between random users
         all_users = list(User.objects.all())
         self.stdout.write('[LINKS] Setting up follows...')
-        for user in random.sample(created_users, min(500, len(created_users))):
-            follow_count = random.randint(3, 15)
-            to_follow = random.sample([u for u in all_users if u.id != user.id], min(follow_count, len(all_users) - 1))
-            for target in to_follow:
-                user.following.add(target)
+        for user in random.sample(all_users, min(500, len(all_users))):
+            if user.following.count() < 3:
+                follow_count = random.randint(3, 15)
+                to_follow = random.sample([u for u in all_users if u.id != user.id], min(follow_count, len(all_users) - 1))
+                for target in to_follow:
+                    user.following.add(target)
 
         # Create posts
         self.stdout.write(f'[POSTS] Creating {num_posts} posts...')
@@ -186,7 +233,6 @@ class Command(BaseCommand):
             author = random.choice(all_users_for_posts)
             content = random.choice(POST_TEXTS)
             
-            # 30% chance of adding extra tags
             if random.random() < 0.3:
                 extra_tags = random.choice(['#ukraine', '#life', '#love', '#photo', '#nature', '#sport', '#music', '#kyiv'])
                 content += f'\n\n{extra_tags}'
@@ -196,7 +242,6 @@ class Command(BaseCommand):
 
             post = Post(author=author, content=content)
             
-            # Distribute images and videos
             rand_val = random.random()
             if rand_val < 0.25:
                 post.image = 'posts/seeded_photo.jpg'

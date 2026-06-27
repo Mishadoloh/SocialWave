@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/AuthContext'
 import { useRouter } from 'next/navigation'
 import SpotlightCard from '@/components/SpotlightCard'
-import { Download, Smartphone, Chrome, ShieldAlert, ArrowDownToLine } from 'lucide-react'
+import { Download, Smartphone, Globe, ShieldAlert, ArrowDownToLine } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function DownloadPage() {
@@ -112,7 +112,7 @@ export default function DownloadPage() {
               fontSize: '14px',
               border: '1px solid var(--border)'
             }}>
-              <Chrome size={16} /> Скористайтеся інструкцією нижче для вашого пристрою
+              <Globe size={16} /> Скористайтеся інструкцією нижче для вашого пристрою
             </div>
           )}
         </motion.div>
@@ -139,7 +139,7 @@ export default function DownloadPage() {
         {activeGuide === 'android' ? (
           <div>
             <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Chrome size={20} style={{ color: 'var(--accent)' }} /> Інструкція для Android (Google Chrome)
+              <Globe size={20} style={{ color: 'var(--accent)' }} /> Інструкція для Android (Google Chrome)
             </h3>
             <ol style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '12px', color: 'var(--text-primary)', fontSize: '15px' }}>
               <li>Відкрийте цей сайт у браузері <strong>Google Chrome</strong> на телефоні.</li>

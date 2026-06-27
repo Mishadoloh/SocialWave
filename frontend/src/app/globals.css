@@ -672,31 +672,36 @@ html, body {
 }
 
 .profile-header {
-  background: linear-gradient(180deg, rgba(108, 99, 255, 0.1) 0%, transparent 100%);
+  background: rgba(255, 255, 255, 0.015);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius);
-  padding: 40px;
+  padding: 0 40px 32px 40px;
   margin-bottom: 32px;
   border: 1px solid var(--border);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .profile-header::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 120px;
-  background: linear-gradient(90deg, var(--accent), #9333ea);
-  opacity: 0.15;
+  height: 150px;
+  background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 50%, #ec4899 100%);
+  opacity: 0.3;
   z-index: 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .profile-info {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 24px;
   position: relative;
   z-index: 1;
+  padding-top: 95px;
   margin-bottom: 32px;
 }
 

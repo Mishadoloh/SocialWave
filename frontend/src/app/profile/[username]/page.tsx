@@ -118,11 +118,17 @@ export default function Profile() {
             <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
                <Calendar size={14} /> Приєднався {new Date(profile.date_joined).getFullYear()}
             </div>
+            {profile.bio && (
+              <p style={{ color: 'var(--text-secondary)', marginTop: '10px', fontSize: '15px', lineHeight: '1.5', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '12px', border: '1px solid var(--border)', maxWidth: '480px' }}>
+                {profile.bio}
+              </p>
+            )}
           </div>
           {!isOwnProfile && user && (
             <button 
               onClick={handleFollow} 
               className={isFollowing ? "btn btn-ghost" : "btn btn-primary"}
+              style={{ alignSelf: 'flex-start', borderRadius: '20px', padding: '10px 24px' }}
             >
               {isFollowing ? <><UserMinus size={18} /> Відписатися</> : <><UserPlus size={18} /> Підписатися</>}
             </button>

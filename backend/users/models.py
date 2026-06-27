@@ -17,8 +17,17 @@ class User(AbstractUser):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.avatar:
-            from users.tasks import compress_avatar_task
-            compress_avatar_task.delay(self.avatar.path, 300, 300)
+            try:
+                from users.tasks import compress_avatar_task
+                compress_avatar_task.delay(self.avatar.path, 300, 300)
+            except Exception:
+                try:
+                    from PIL import Image as PILImage
+                    img = PILImage.open(self.avatar.path)
+                    img.thumbnail((300, 300), PILImage.LANCZOS)
+                    img.save(self.avatar.path, optimize=True, quality=85)
+                except Exception:
+                    pass
 
     def followers_count(self):
         return self.followers.count()
