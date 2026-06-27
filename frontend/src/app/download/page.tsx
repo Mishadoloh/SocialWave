@@ -79,42 +79,64 @@ export default function DownloadPage() {
             Встановіть SocialWave як додаток (PWA) для миттєвого доступу, повноекранного режиму та високої швидкості роботи.
           </p>
 
-          {isInstalled ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgb(74, 222, 128)', borderRadius: '24px', color: 'rgb(74, 222, 128)', fontWeight: 600 }}>
-              Додаток вже встановлено! 🎉
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {deferredPrompt && (
+                <button
+                  onClick={handleInstallClick}
+                  className="btn btn-primary"
+                  style={{
+                    borderRadius: '30px',
+                    padding: '12px 32px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    boxShadow: '0 8px 20px var(--accent-glow)'
+                  }}
+                >
+                  <ArrowDownToLine size={18} /> Встановити PWA
+                </button>
+              )}
+              
+              <a
+                href="/socialwave-desktop.bat"
+                download="SocialWave.bat"
+                className="btn btn-ghost"
+                style={{
+                  borderRadius: '30px',
+                  padding: '12px 32px',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  border: '1px solid var(--border)',
+                  textDecoration: 'none'
+                }}
+              >
+                <Download size={18} /> Скачати для Windows (.bat)
+              </a>
             </div>
-          ) : deferredPrompt ? (
-            <button
-              onClick={handleInstallClick}
-              className="btn btn-primary"
-              style={{
-                borderRadius: '30px',
-                padding: '12px 32px',
-                fontSize: '16px',
-                fontWeight: 700,
+
+            {!deferredPrompt && !isInstalled && (
+              <div style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '10px',
-                boxShadow: '0 10px 25px var(--accent-light)'
-              }}
-            >
-              <ArrowDownToLine size={20} /> Встановити зараз
-            </button>
-          ) : (
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '12px 20px',
-              background: 'var(--bg-input)',
-              borderRadius: '20px',
-              color: 'var(--text-muted)',
-              fontSize: '14px',
-              border: '1px solid var(--border)'
-            }}>
-              <Globe size={16} /> Скористайтеся інструкцією нижче для вашого пристрою
-            </div>
-          )}
+                padding: '12px 20px',
+                background: 'var(--bg-input)',
+                borderRadius: '20px',
+                color: 'var(--text-muted)',
+                fontSize: '14px',
+                border: '1px solid var(--border)',
+                marginTop: '8px'
+              }}>
+                <Globe size={16} /> Скористайтеся інструкцією нижче для вашого мобільного пристрою
+              </div>
+            )}
+          </div>
         </motion.div>
       </SpotlightCard>
 
