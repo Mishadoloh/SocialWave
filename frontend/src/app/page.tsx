@@ -101,7 +101,7 @@ export default function Feed() {
     <div className="page-container animate-fade-in">
       <h1 className="page-title">Головна стрічка</h1>
 
-      <SpotlightCard className="create-post">
+      <SpotlightCard className="create-post" style={{ maxWidth: '470px', margin: '0 auto 24px auto', padding: '16px', borderRadius: '12px' }}>
         <form onSubmit={handleCreatePost}>
           <div style={{ display: 'flex', gap: '16px' }}>
             {user.avatar_url ? (

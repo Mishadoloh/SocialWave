@@ -97,50 +97,40 @@ export default function PostCard({ post: initialPost }: { post: any }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      transition={{ duration: 0.2 }}
       layout
-      style={{ marginBottom: '16px' }}
+      style={{ marginBottom: '24px' }}
     >
       <SpotlightCard className="post-card" style={{ marginBottom: 0 }}>
+        {/* Header */}
         <div className="post-header">
-          <Link href={`/profile/${post.author.username}`}>
-            {post.author.avatar_url ? (
-              <img src={post.author.avatar_url} className="avatar avatar-md" alt={post.author.username} />
-            ) : (
-              <div className="avatar avatar-md">{post.author.username[0].toUpperCase()}</div>
-            )}
+          <Link href={`/profile/${post.author.username}`} style={{ display: 'inline-block', borderRadius: '50%', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', padding: '2px', textDecoration: 'none' }}>
+            <div style={{ background: '#000', borderRadius: '50%', padding: '2px', display: 'flex' }}>
+              {post.author.avatar_url ? (
+                <img src={post.author.avatar_url} className="avatar avatar-sm" alt={post.author.username} style={{ border: 'none', width: '32px', height: '32px' }} />
+              ) : (
+                <div className="avatar avatar-sm" style={{ width: '32px', height: '32px', fontSize: '12px', background: 'var(--accent)', color: '#fff' }}>{post.author.username[0].toUpperCase()}</div>
+              )}
+            </div>
           </Link>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Link href={`/profile/${post.author.username}`} className="post-author-name">
                 {post.author.username}
               </Link>
-              <button onClick={handleReport} className="btn-icon" style={{ color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer' }} title="Поскаржитись">
-                <Flag size={18} />
+              <button onClick={handleReport} className="btn-icon" style={{ color: 'var(--text-muted)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }} title="Поскаржитись">
+                <MoreHorizontal size={20} />
               </button>
             </div>
-            <div className="post-time">{timeAgo}</div>
           </div>
         </div>
 
-        <div className="post-content">
-          {post.content}
-          {post.hashtags && post.hashtags.length > 0 && (
-            <div style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {post.hashtags.map((tag: string) => (
-                <Link key={tag} href={`/search?q=%23${tag}`} style={{ color: 'var(--primary)', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>
-                  #{tag}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
+        {/* Media (Full Width) */}
         {post.image_url && (
-          <img src={post.image_url} alt="Post" className="post-image" style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginBottom: '16px', maxHeight: '400px', objectFit: 'cover' }} />
+          <img src={post.image_url} alt="Post" className="post-image" style={{ width: '100%', borderRadius: '0', marginBottom: '8px', maxHeight: '580px', objectFit: 'cover' }} />
         )}
 
         {post.video_url && (
@@ -149,90 +139,89 @@ export default function PostCard({ post: initialPost }: { post: any }) {
             controls 
             playsInline
             className="post-video" 
-            style={{ width: '100%', borderRadius: 'var(--radius-sm)', marginBottom: '16px', maxHeight: '450px', background: '#000' }} 
+            style={{ width: '100%', borderRadius: '0', marginBottom: '8px', maxHeight: '580px', background: '#000' }} 
           />
         )}
 
+        {/* Action Buttons */}
         <div className="post-actions">
           <motion.button 
             onClick={handleLike} 
             className={`action-btn ${post.is_liked ? 'liked' : ''}`}
             whileTap={{ scale: 0.8 }}
           >
-            <motion.div
-              animate={post.is_liked ? { scale: [1, 1.3, 1] } : { scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Heart size={20} fill={post.is_liked ? 'currentColor' : 'none'} />
-            </motion.div>
-            <span>{post.likes_count}</span>
+            <Heart size={24} fill={post.is_liked ? 'var(--like)' : 'none'} style={{ color: post.is_liked ? 'var(--like)' : 'var(--text-primary)' }} />
           </motion.button>
           
           <button onClick={() => setShowComments(!showComments)} className="action-btn">
-            <motion.div whileTap={{ scale: 0.9 }} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MessageCircle size={20} />
-              <span>{post.comments_count}</span>
-            </motion.div>
+            <MessageCircle size={24} style={{ color: 'var(--text-primary)' }} />
           </button>
           
-          <button onClick={handleBookmark} className={`action-btn ${post.is_bookmarked ? 'liked' : ''}`} style={{ marginLeft: 'auto', color: post.is_bookmarked ? 'var(--primary)' : 'inherit' }}>
-            <motion.div whileTap={{ scale: 0.9 }}>
-              <Bookmark size={20} fill={post.is_bookmarked ? 'currentColor' : 'none'} />
-            </motion.div>
+          <button onClick={handleBookmark} className="action-btn" style={{ marginLeft: 'auto' }}>
+            <Bookmark size={24} fill={post.is_bookmarked ? 'var(--text-primary)' : 'none'} style={{ color: 'var(--text-primary)' }} />
           </button>
         </div>
 
-        <AnimatePresence>
-          {showComments && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              style={{ overflow: 'hidden' }}
-            >
-              <div style={{ paddingTop: '16px', marginTop: '16px', borderTop: '1px solid var(--border)' }}>
-                {post.comments?.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-                    {post.comments.map((comment: any) => (
-                      <div key={comment.id} style={{ display: 'flex', gap: '12px' }}>
-                        <div className="avatar avatar-sm">
-                          {comment.author?.avatar_url ? (
-                            <img src={comment.author.avatar_url} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
-                          ) : (
-                            comment.author?.username[0].toUpperCase()
-                          )}
-                        </div>
-                        <div style={{ background: 'var(--bg-input)', padding: '10px 14px', borderRadius: '16px', borderTopLeftRadius: '4px', flex: 1 }}>
-                          <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '4px' }}>{comment.author?.username}</div>
-                          <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>{comment.content}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '12px', color: 'var(--text-muted)', fontSize: '14px' }}>
-                    Поки немає коментарів. Будьте першим!
-                  </div>
-                )}
-                
-                <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="text"
-                    value={commentText}
-                    onChange={e => setCommentText(e.target.value)}
-                    placeholder="Написати коментар..."
-                    className="form-input"
-                    style={{ padding: '8px 16px', borderRadius: '20px' }}
-                    disabled={isCommenting}
-                  />
-                  <button type="submit" className="btn btn-primary btn-icon" disabled={!commentText.trim() || isCommenting} style={{ width: '40px', height: '40px', borderRadius: '50%', padding: 0 }}>
-                    <Send size={16} />
-                  </button>
-                </form>
+        {/* Likes Count */}
+        <div style={{ padding: '0 16px', fontWeight: 700, fontSize: '14px', marginBottom: '6px', color: 'var(--text-primary)' }}>
+          {post.likes_count} likes
+        </div>
+
+        {/* Caption */}
+        {post.content && (
+          <div className="post-content" style={{ marginBottom: '6px' }}>
+            <span style={{ fontWeight: 700, marginRight: '8px' }}>{post.author.username}</span>
+            {post.content}
+            {post.hashtags && post.hashtags.length > 0 && (
+              <div style={{ marginTop: '4px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {post.hashtags.map((tag: string) => (
+                  <Link key={tag} href={`/search?q=%23${tag}`} style={{ color: 'var(--accent-light)', fontSize: '13px', textDecoration: 'none', fontWeight: 500 }}>
+                    #{tag}
+                  </Link>
+                ))}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </div>
+        )}
+
+        {/* Comments Preview */}
+        {post.comments_count > 2 && (
+          <button 
+            onClick={() => setShowComments(!showComments)} 
+            style={{ padding: '0 16px', background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer', marginBottom: '6px', display: 'block', textAlign: 'left' }}
+          >
+            Читати всі коментарі ({post.comments_count})
+          </button>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '8px' }}>
+          {(showComments ? post.comments : post.comments?.slice(-2))?.map((comment: any) => (
+            <div key={comment.id} style={{ padding: '0 16px', fontSize: '14px' }}>
+              <span style={{ fontWeight: 700, marginRight: '8px' }}>{comment.author?.username}</span>
+              <span style={{ color: 'var(--text-primary)' }}>{comment.content}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Time Ago */}
+        <div style={{ padding: '0 16px', fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '12px' }}>
+          {timeAgo}
+        </div>
+
+        {/* Comment Form Input */}
+        <form onSubmit={handleCommentSubmit} style={{ display: 'flex', gap: '8px', padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'transparent' }}>
+          <input
+            type="text"
+            value={commentText}
+            onChange={e => setCommentText(e.target.value)}
+            placeholder="Додати коментар..."
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--text-primary)', flex: 1, fontSize: '14px' }}
+            disabled={isCommenting}
+          />
+          <button type="submit" style={{ background: 'transparent', border: 'none', color: 'var(--accent)', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }} disabled={!commentText.trim() || isCommenting}>
+            Опублікувати
+          </button>
+        </form>
       </SpotlightCard>
     </motion.div>
   )
