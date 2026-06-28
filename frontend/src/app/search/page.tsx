@@ -20,8 +20,19 @@ export default function SearchPage() {
   const [activeTab, setActiveTab] = useState('users') // 'users' | 'posts'
   const [users, setUsers] = useState([])
   const [posts, setPosts] = useState([])
+  const [trendingPosts, setTrendingPosts] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname
+      fetch(`http://${host}:8080/api/go/explore`)
+        .then(res => res.json())
+        .then(data => setTrendingPosts(data))
+        .catch(err => console.error("Failed to fetch explore posts:", err))
+    }
+  }, [])
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -106,20 +117,62 @@ export default function SearchPage() {
           ) : !hasSearched ? (
             <motion.div 
               key="initial"
-              className="empty-state"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ marginTop: '8px' }}
             >
-              <motion.div 
-                className="empty-state-icon"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-              >
-                <SearchIcon size={64} style={{ color: 'var(--accent)' }} />
-              </motion.div>
-              <h3>Почніть пошук</h3>
-              <p>Введіть запит для пошуку {activeTab === 'users' ? 'користувачів' : 'постів'}</p>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '16px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🔥 Цікаве для вас (Go Microservice)
+              </h3>
+              
+              {trendingPosts.length === 0 ? (
+                <div className="empty-state" style={{ padding: '40px 0' }}>
+                  <SearchIcon size={40} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+                  <p style={{ color: 'var(--text-muted)' }}>Завантаження рекомендацій...</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
+                  {trendingPosts.map((post: any) => (
+                    <div 
+                      key={post.id} 
+                      style={{ 
+                        position: 'relative', 
+                        aspectRatio: '1/1', 
+                        overflow: 'hidden', 
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        background: '#121212',
+                        border: '1px solid var(--border)'
+                      }}
+                    >
+                      {post.video_url ? (
+                        <video src={`http://${window.location.hostname}:8000${post.video_url}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : post.image_url ? (
+                        <img src={`http://${window.location.hostname}:8000${post.image_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #121212, #262626)', padding: '12px', fontSize: '12px', textAlign: 'center', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {post.content}
+                        </div>
+                      )}
+                      
+                      {/* Hover Overlay */}
+                      <div 
+                        style={{
+                          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                          background: 'rgba(0,0,0,0.6)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          opacity: 0, transition: 'opacity 0.15s ease', gap: '8px', color: '#fff', fontWeight: 'bold', fontSize: '16px'
+                        }}
+                        onMouseEnter={(e: any) => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={(e: any) => e.currentTarget.style.opacity = 0}
+                      >
+                        ❤️ {post.likes_count}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           ) : activeTab === 'users' ? (
             users.length === 0 ? (
