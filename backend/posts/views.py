@@ -17,10 +17,17 @@ class FeedView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        following_ids = user.following.values_list('id', flat=True)
-        return Post.objects.filter(
-            Q(author__in=following_ids) | Q(author=user)
-        ).select_related('author').prefetch_related('likes', 'comments__author')
+        following_ids = list(user.following.values_list('id', flat=True))
+        if following_ids:
+            queryset = Post.objects.filter(
+                Q(author__in=following_ids) | Q(author=user)
+            )
+        else:
+            # Fallback algorithm (Instagram-like): recommend latest posts from all users
+            # so the feed is never empty for new signups.
+            queryset = Post.objects.all()
+            
+        return queryset.select_related('author').prefetch_related('likes', 'comments__author').order_by('-created_at')
 
 
 class PostListCreateView(generics.ListCreateAPIView):
